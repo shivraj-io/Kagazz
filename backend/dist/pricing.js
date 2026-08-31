@@ -1,0 +1,2 @@
+export function calculatePrice(fileCount, config) { const rate = config.mode === "color" ? 10 : 2; const sideMultiplier = config.sides === "double" ? 0.9 : 1; const binding = config.binding === "spiral" ? 30 : config.binding === "tape" ? 10 : 0; return Math.round((fileCount * rate * config.copies * sideMultiplier + binding) * 100) / 100; }
+//# sourceMappingURL=pricing.js.map

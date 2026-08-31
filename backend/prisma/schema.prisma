@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  RECEIVED
+  PRINTING
+  READY
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id             String   @id @default(cuid())
+  phone          String?  @unique
+  phoneVerified  Boolean  @default(false)
+  googleId       String?  @unique
+  name           String?
+  email          String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+}
+
+model Order {
+  id              String          @id
+  customerPhone   String
+  amount          Decimal         @db.Decimal(10, 2)
+  paymentMethod   String          @default("PAY_AT_SHOP")
+  paymentStatus   PaymentStatus   @default(PENDING)
+  status          OrderStatus     @default(RECEIVED)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id])
+  documents       OrderDocument[]
+  printConfig     PrintConfiguration?
+  statusEvents    OrderStatusEvent[]
+
+  @@index([status, createdAt])
+  @@index([customerPhone])
+}
+
+model OrderDocument {
+  id         String   @id @default(cuid())
+  orderId    String
+  fileName   String
+  mimeType   String
+  fileSize   Int
+  s3Key      String?
+  pageCount  Int?
+  createdAt  DateTime @default(now())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model PrintConfiguration {
+  id        String @id @default(cuid())
+  orderId   String @unique
+  mode      String
+  sides     String
+  copies    Int
+  binding   String
+  category  String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  from      OrderStatus?
+  to        OrderStatus
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+}
